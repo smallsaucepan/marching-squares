@@ -1,7 +1,7 @@
 {
   "name": "marching-squares-ts",
   "description": "A TypeScript implementation of the marching squares algorithm featuring isoline and isoband computation.",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "author": {
     "name": "James Beard",
     "email": "james@smallsaucepan.com",
@@ -26,25 +26,25 @@
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "import": {
-        "default": "./dist/esm/index.js",
-        "types": "./dist/esm/index.d.ts"
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
       },
-      "default": {
-        "default": "./dist/cjs/index.cjs",
-        "types": "./dist/cjs/index.d.cts"
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
       }
     }
   },
-  "directories": {
-    "example": "./example",
-    "dist": "./dist"
-  },
+  "files": [
+    "agpl-3.0.txt",
+    "dist"
+  ],
   "scripts": {
-    "build": "rollup -c",
-    "pretest": "rollup -c rollup.config.test.js",
-    "test": "node ./test/test.js"
+    "build": "npx tsup && npx rollup -c",
+    "test": "npx tsx ./test/test.ts"
   },
   "homepage": "https://github.com/smallsaucepan/marching-squares-ts",
   "repository": {
