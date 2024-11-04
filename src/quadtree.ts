@@ -1,10 +1,9 @@
-
 /* quadTree node constructor */
 function TreeNode(data, x, y, dx, dy) {
   var dx_tmp = dx,
     dy_tmp = dy,
-    msb_x  = 0,
-    msb_y  = 0;
+    msb_x = 0,
+    msb_y = 0;
 
   /* left-bottom corner of current quadrant */
   this.x = x;
@@ -33,7 +32,7 @@ function TreeNode(data, x, y, dx, dy) {
   this.childC = null;
   this.childD = null;
 
-  if ((dx === 1) && (dy === 1)) {
+  if (dx === 1 && dy === 1) {
     /* do not further subdivision */
     this.lowerBound = Math.min(
       data[y][x],
@@ -55,8 +54,7 @@ function TreeNode(data, x, y, dx, dy) {
         msb_x++;
       }
 
-      if (dx === (1 << (msb_x - 1)))
-        msb_x--;
+      if (dx === 1 << (msb_x - 1)) msb_x--;
 
       dx_tmp = 1 << (msb_x - 1);
     }
@@ -68,8 +66,7 @@ function TreeNode(data, x, y, dx, dy) {
         msb_y++;
       }
 
-      if (dy === (1 << (msb_y - 1)))
-        msb_y--;
+      if (dy === 1 << (msb_y - 1)) msb_y--;
 
       dy_tmp = 1 << (msb_y - 1);
     }
@@ -84,7 +81,13 @@ function TreeNode(data, x, y, dx, dy) {
       this.upperBound = Math.max(this.upperBound, this.childB.upperBound);
 
       if (dy - dy_tmp > 0) {
-        this.childC = new TreeNode(data, x + dx_tmp, y + dy_tmp, dx - dx_tmp, dy - dy_tmp);
+        this.childC = new TreeNode(
+          data,
+          x + dx_tmp,
+          y + dy_tmp,
+          dx - dx_tmp,
+          dy - dy_tmp
+        );
         this.lowerBound = Math.min(this.lowerBound, this.childC.lowerBound);
         this.upperBound = Math.max(this.upperBound, this.childC.upperBound);
       }
@@ -97,7 +100,6 @@ function TreeNode(data, x, y, dx, dy) {
     }
   }
 }
-
 
 /**
  *  Retrieve a list of cells within a particular range of values by
@@ -112,74 +114,88 @@ function TreeNode(data, x, y, dx, dy) {
  *            properties: 'o.x' and 'o.y' denoting the left-bottom corner
  *            of the corresponding cell.
  */
-TreeNode.prototype.cellsInBand = function(lowerBound, upperBound, subsumed) {
+TreeNode.prototype.cellsInBand = function (lowerBound, upperBound, subsumed) {
   var cells = [];
 
-  subsumed = (typeof subsumed === 'undefined') ? true : subsumed;
+  subsumed = typeof subsumed === "undefined" ? true : subsumed;
 
-  if ((this.lowerBound > upperBound) || (this.upperBound < lowerBound))
+  if (this.lowerBound > upperBound || this.upperBound < lowerBound)
     return cells;
 
   if (!(this.childA || this.childB || this.childC || this.childD)) {
-    if ((subsumed) ||
-        (this.lowerBound <= lowerBound) ||
-        (this.upperBound >= upperBound)) {
+    if (
+      subsumed ||
+      this.lowerBound <= lowerBound ||
+      this.upperBound >= upperBound
+    ) {
       cells.push({
         x: this.x,
-        y: this.y
+        y: this.y,
       });
     }
   } else {
     if (this.childA)
-      cells = cells.concat(this.childA.cellsInBand(lowerBound, upperBound, subsumed));
+      cells = cells.concat(
+        this.childA.cellsInBand(lowerBound, upperBound, subsumed)
+      );
 
     if (this.childB)
-      cells = cells.concat(this.childB.cellsInBand(lowerBound, upperBound, subsumed));
+      cells = cells.concat(
+        this.childB.cellsInBand(lowerBound, upperBound, subsumed)
+      );
 
     if (this.childD)
-      cells = cells.concat(this.childD.cellsInBand(lowerBound, upperBound, subsumed));
+      cells = cells.concat(
+        this.childD.cellsInBand(lowerBound, upperBound, subsumed)
+      );
 
     if (this.childC)
-      cells = cells.concat(this.childC.cellsInBand(lowerBound, upperBound, subsumed));
+      cells = cells.concat(
+        this.childC.cellsInBand(lowerBound, upperBound, subsumed)
+      );
   }
 
   return cells;
 };
 
-
-TreeNode.prototype.cellsBelowThreshold = function(threshold, subsumed) {
+TreeNode.prototype.cellsBelowThreshold = function (threshold, subsumed) {
   var cells = [];
 
-  subsumed = (typeof subsumed === 'undefined') ? true : subsumed;
+  subsumed = typeof subsumed === "undefined" ? true : subsumed;
 
-  if (this.lowerBound > threshold)
-    return cells;
+  if (this.lowerBound > threshold) return cells;
 
   if (!(this.childA || this.childB || this.childC || this.childD)) {
-    if ((subsumed) ||
-        (this.upperBound >= threshold)) {
+    if (subsumed || this.upperBound >= threshold) {
       cells.push({
         x: this.x,
-        y: this.y
+        y: this.y,
       });
     }
   } else {
     if (this.childA)
-      cells = cells.concat(this.childA.cellsBelowThreshold(threshold, subsumed));
+      cells = cells.concat(
+        this.childA.cellsBelowThreshold(threshold, subsumed)
+      );
 
     if (this.childB)
-      cells = cells.concat(this.childB.cellsBelowThreshold(threshold, subsumed));
+      cells = cells.concat(
+        this.childB.cellsBelowThreshold(threshold, subsumed)
+      );
 
     if (this.childD)
-      cells = cells.concat(this.childD.cellsBelowThreshold(threshold, subsumed));
+      cells = cells.concat(
+        this.childD.cellsBelowThreshold(threshold, subsumed)
+      );
 
     if (this.childC)
-      cells = cells.concat(this.childC.cellsBelowThreshold(threshold, subsumed));
+      cells = cells.concat(
+        this.childC.cellsBelowThreshold(threshold, subsumed)
+      );
   }
 
   return cells;
 };
-
 
 /*
  * Given a scalar field `data` construct a QuadTree
@@ -191,28 +207,26 @@ function QuadTree(data) {
   var i, cols;
 
   /* do some input checking */
-  if (!data)
-    throw new Error('data is required');
+  if (!data) throw new Error("data is required");
 
-  if (!Array.isArray(data) ||
-      !Array.isArray(data[0]))
-    throw new Error('data must be scalar field, i.e. array of arrays');
+  if (!Array.isArray(data) || !Array.isArray(data[0]))
+    throw new Error("data must be scalar field, i.e. array of arrays");
 
-  if (data.length < 2)
-    throw new Error('data must contain at least two rows');
+  if (data.length < 2) throw new Error("data must contain at least two rows");
 
   /* check if we've got a regular grid */
   cols = data[0].length;
 
-  if (cols < 2)
-    throw new Error('data must contain at least two columns');
+  if (cols < 2) throw new Error("data must contain at least two columns");
 
   for (i = 1; i < data.length; i++) {
     if (!Array.isArray(data[i]))
-      throw new Error('Row ' + i + ' is not an array');
+      throw new Error("Row " + i + " is not an array");
 
     if (data[i].length != cols)
-      throw new Error('unequal row lengths detected, please provide a regular grid');
+      throw new Error(
+        "unequal row lengths detected, please provide a regular grid"
+      );
   }
 
   /* create pre-processing object */
@@ -221,8 +235,4 @@ function QuadTree(data) {
   this.root = new TreeNode(data, 0, 0, data[0].length - 1, data.length - 1);
 }
 
-
-export {
-  QuadTree,
-  QuadTree as quadTree
-};
+export { QuadTree, QuadTree as quadTree };
