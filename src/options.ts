@@ -1,28 +1,53 @@
-import * as interpolate from "./interpolation";
+import * as interpolate from "./interpolation.js";
+import { SuccessCallback } from "./common.js";
 
-function Options() {
+interface Options {
+  successCallback?: SuccessCallback;
+  verbose?: boolean;
+  polygons?: boolean;
+  linearRing?: boolean;
+  noQuadTree?: boolean;
+  noFrame?: boolean;
+}
+
+class InternalOptions implements Options {
   /* Settings common to all implemented algorithms */
-  this.successCallback = null;
-  this.verbose = false;
-  this.polygons = false;
-  this.polygons_full = false;
-  this.linearRing = true;
-  this.noQuadTree = false;
-  this.noFrame = false;
+  successCallback: SuccessCallback | undefined;
+  verbose: boolean = false;
+  polygons: boolean = false;
+  polygons_full: boolean = false;
+  linearRing: boolean = true;
+  noQuadTree: boolean = false;
+  noFrame: boolean = false;
+
+  threshold?: number;
+}
+
+class IsoLineOptions extends InternalOptions {
+  /* add interpolation functions (not yet user customizable) */
+  interpolate = interpolate.linear;
+}
+
+class IsoBandOptions extends InternalOptions {
+  /* add interpolation functions (not yet user customizable) */
+  interpolate = interpolate.linear_ab;
+  interpolate_a = interpolate.linear_a;
+  interpolate_b = interpolate.linear_b;
+
+  minV?: number;
+  maxV?: number;
 }
 
 /* Compose settings specific to IsoBands algorithm */
-function isoBandOptions(userSettings) {
-  var i, key, val, bandOptions, optionKeys;
+function isoBandOptions(userSettings: Options) {
+  const bandOptions = new IsoBandOptions();
+  type P = keyof Options;
 
-  bandOptions = new Options();
-  userSettings = userSettings ? userSettings : {};
-  optionKeys = Object.keys(bandOptions);
-
-  for (i = 0; i < optionKeys.length; i++) {
-    key = optionKeys[i];
-    val = userSettings[key];
-    if (typeof val !== "undefined" && val !== null) bandOptions[key] = val;
+  for (const key of Object.keys(bandOptions)) {
+    const val = userSettings[key as P];
+    if (typeof val !== "undefined" && val !== null) {
+      bandOptions[key as P] = val as any;
+    }
   }
 
   /* restore compatibility */
@@ -37,17 +62,15 @@ function isoBandOptions(userSettings) {
 }
 
 /* Compose settings specific to IsoLines algorithm */
-function isoLineOptions(userSettings) {
-  var i, key, val, lineOptions, optionKeys;
+function isoLineOptions(userSettings: Options) {
+  const lineOptions = new IsoLineOptions();
+  type P = keyof Options;
 
-  lineOptions = new Options();
-  userSettings = userSettings ? userSettings : {};
-  optionKeys = Object.keys(lineOptions);
-
-  for (i = 0; i < optionKeys.length; i++) {
-    key = optionKeys[i];
-    val = userSettings[key];
-    if (typeof val !== "undefined" && val !== null) lineOptions[key] = val;
+  for (const key of Object.keys(lineOptions)) {
+    const val = userSettings[key as P];
+    if (typeof val !== "undefined" && val !== null) {
+      lineOptions[key as P] = val as any;
+    }
   }
 
   /* restore compatibility */
@@ -59,4 +82,11 @@ function isoLineOptions(userSettings) {
   return lineOptions;
 }
 
-export { isoBandOptions, isoLineOptions };
+export {
+  isoBandOptions,
+  isoLineOptions,
+  Options,
+  InternalOptions,
+  IsoBandOptions,
+  IsoLineOptions,
+};

@@ -1,10 +1,14 @@
-var fs = require("fs");
-var path = require("path");
-var test = require("tape");
-var load = require("load-json-file");
-var isoBands = require("../dist/marchingsquares.js").isoBands;
-var isoLines = require("../dist/marchingsquares.js").isoLines;
-var QuadTree = require("../dist/marchingsquares.js").QuadTree;
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import test from "tape";
+import { loadJsonFileSync } from "load-json-file";
+import { isoBands } from "../src/isobands.js";
+import { isoLines } from "../src/isolines.js";
+import { QuadTree } from "../src/quadtree.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 var directories = {
   in: path.join(__dirname, "data", "in") + path.sep,
@@ -19,7 +23,7 @@ var isoBandsTestCases = fs
   .map(function (filename) {
     return {
       name: path.parse(filename).name,
-      data: load.sync(directories.in + filename),
+      data: loadJsonFileSync(directories.in + filename),
     };
   });
 
@@ -33,7 +37,7 @@ test("isoBands output", function (t) {
 
     var bands = isoBands(data, lowerBand, upperBand - lowerBand);
     // console.log(JSON.stringify(bands));
-    t.deepEqual(bands, load.sync(outputfile), name);
+    t.deepEqual(bands, loadJsonFileSync(outputfile), name);
   });
 
   t.end();
@@ -47,7 +51,7 @@ var isoLinesTestCases = fs
   .map(function (filename) {
     return {
       name: path.parse(filename).name,
-      data: load.sync(directories.in + filename),
+      data: loadJsonFileSync(directories.in + filename),
     };
   });
 
@@ -60,7 +64,7 @@ test("isoLines output", function (t) {
 
     var lines = isoLines(data, thresholds);
     // console.log(JSON.stringify(lines));
-    t.deepEqual(lines, load.sync(outputfile), name);
+    t.deepEqual(lines, loadJsonFileSync(outputfile), name);
   });
 
   t.end();

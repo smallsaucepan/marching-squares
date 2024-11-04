@@ -3,11 +3,11 @@ import { defineConfig, type Options } from "tsup";
 const baseOptions: Options = {
   clean: true,
   dts: true,
-  entry: ["index.ts"],
+  entry: ["src/main.ts"],
   minify: false,
   skipNodeModulesBundle: true,
   sourcemap: true,
-  target: "es2017",
+  target: "es2022",
   tsconfig: "./tsconfig.json",
   keepNames: true,
   cjsInterop: true,

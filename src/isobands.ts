@@ -1,16 +1,25 @@
-/* eslint no-console: ["error", { allow: ["log"] }] */
-/* eslint-env browser,node */
-
-import { isoBandOptions } from "./options.js";
+import {
+  isoBandOptions,
+  type Options,
+  type IsoBandOptions,
+} from "./options.js";
 import { cell2Polygons, traceBandPaths } from "./polygons.js";
 import { QuadTree } from "./quadtree.js";
+import { type Ring, type BandCell, type BandCellGrid } from "./common.js";
 
 /*
  * lookup table to generate polygon paths or edges required to
  * trace the full polygon(s)
  */
-var shapeCoordinates = {
-  square: function (cell, x0, x1, x2, x3, opt) {
+const shapeCoordinates = {
+  square: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
     if (opt.polygons)
       cell.polygons.push([
         [0, 0],
@@ -20,9 +29,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  triangle_bl: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
+  triangle_bl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -46,9 +63,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  triangle_br: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  triangle_br: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -72,9 +97,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  triangle_tr: function (cell, x0, x1, x2, x3, opt) {
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
+  triangle_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.rt = {
@@ -98,9 +131,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  triangle_tl: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
+  triangle_tl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tl = {
@@ -124,9 +165,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_t: function (cell, x0, x1, x2, x3, opt) {
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
+  tetragon_t: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.rt = {
@@ -151,9 +200,18 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_r: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
+  tetragon_r: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+
     if (opt.polygons_full) {
       cell.edges.br = {
         path: [
@@ -177,9 +235,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_b: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  tetragon_b: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -204,9 +270,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_l: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  tetragon_l: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tl = {
@@ -231,11 +305,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_bl: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
+  tetragon_bl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -271,11 +353,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_br: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
+  tetragon_br: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -311,11 +401,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_tr: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  tetragon_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.rb = {
@@ -351,11 +449,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_tl: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
+  tetragon_tl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tr = {
@@ -391,11 +497,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_lr: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  tetragon_lr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lt = {
@@ -431,11 +545,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  tetragon_tb: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
+  tetragon_tb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tr = {
@@ -471,9 +593,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_tr: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  pentagon_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tl = {
@@ -499,9 +629,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_tl: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
+  pentagon_tl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -527,9 +665,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_br: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  pentagon_br: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.rt = {
@@ -554,9 +700,17 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_bl: function (cell, x0, x1, x2, x3, opt) {
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  pentagon_bl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -582,11 +736,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_tr_rl: function (cell, x0, x1, x2, x3, opt) {
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  pentagon_tr_rl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tl = {
@@ -623,11 +785,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_rb_bt: function (cell, x0, x1, x2, x3, opt) {
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
+  pentagon_rb_bt: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.rt = {
@@ -664,11 +834,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_bl_lr: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  pentagon_bl_lr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -705,11 +883,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_lt_tb: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  pentagon_lt_tb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -746,11 +932,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_bl_tb: function (cell, x0, x1, x2, x3, opt) {
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
+  pentagon_bl_tb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -787,11 +981,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_lt_rl: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate(x1, x3, opt.minV, opt.maxV);
+  pentagon_lt_rl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate(x1, x3, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lt = {
@@ -828,11 +1030,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_tr_bt: function (cell, x0, x1, x2, x3, opt) {
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  pentagon_tr_bt: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -869,11 +1079,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  pentagon_rb_lr: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  pentagon_rb_lr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -909,11 +1127,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_lt_tr: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  hexagon_lt_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -951,11 +1177,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_bl_lt: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
+  hexagon_bl_lt: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -993,11 +1227,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_bl_rb: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  hexagon_bl_rb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -1035,11 +1277,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_tr_rb: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  hexagon_tr_rb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.tl = {
@@ -1077,11 +1327,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_lt_rb: function (cell, x0, x1, x2, x3, opt) {
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
+  hexagon_lt_rb: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -1119,11 +1377,19 @@ var shapeCoordinates = {
       ]);
   },
 
-  hexagon_bl_tr: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  hexagon_bl_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -1161,13 +1427,21 @@ var shapeCoordinates = {
       ]);
   },
 
-  heptagon_tr: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var topright = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  heptagon_tr: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -1217,13 +1491,21 @@ var shapeCoordinates = {
       ]);
   },
 
-  heptagon_bl: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  heptagon_bl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.lb = {
@@ -1273,13 +1555,21 @@ var shapeCoordinates = {
       ]);
   },
 
-  heptagon_tl: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  heptagon_tl: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -1329,13 +1619,21 @@ var shapeCoordinates = {
       ]);
   },
 
-  heptagon_br: function (cell, x0, x1, x2, x3, opt) {
-    var bottomright = opt.interpolate(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate(x1, x2, opt.minV, opt.maxV);
+  heptagon_br: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomright = opt.interpolate(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.br = {
@@ -1385,15 +1683,23 @@ var shapeCoordinates = {
       ]);
   },
 
-  octagon: function (cell, x0, x1, x2, x3, opt) {
-    var bottomleft = opt.interpolate_a(x0, x1, opt.minV, opt.maxV);
-    var bottomright = opt.interpolate_b(x0, x1, opt.minV, opt.maxV);
-    var leftbottom = opt.interpolate_a(x0, x3, opt.minV, opt.maxV);
-    var lefttop = opt.interpolate_b(x0, x3, opt.minV, opt.maxV);
-    var topleft = opt.interpolate_a(x3, x2, opt.minV, opt.maxV);
-    var topright = opt.interpolate_b(x3, x2, opt.minV, opt.maxV);
-    var righttop = opt.interpolate_b(x1, x2, opt.minV, opt.maxV);
-    var rightbottom = opt.interpolate_a(x1, x2, opt.minV, opt.maxV);
+  octagon: function (
+    cell: BandCell,
+    x0: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    opt: IsoBandOptions
+  ) {
+    // assume minV and maxV defined
+    const bottomleft = opt.interpolate_a(x0, x1, opt.minV!, opt.maxV!);
+    const bottomright = opt.interpolate_b(x0, x1, opt.minV!, opt.maxV!);
+    const leftbottom = opt.interpolate_a(x0, x3, opt.minV!, opt.maxV!);
+    const lefttop = opt.interpolate_b(x0, x3, opt.minV!, opt.maxV!);
+    const topleft = opt.interpolate_a(x3, x2, opt.minV!, opt.maxV!);
+    const topright = opt.interpolate_b(x3, x2, opt.minV!, opt.maxV!);
+    const righttop = opt.interpolate_b(x1, x2, opt.minV!, opt.maxV!);
+    const rightbottom = opt.interpolate_a(x1, x2, opt.minV!, opt.maxV!);
 
     if (opt.polygons_full) {
       cell.edges.bl = {
@@ -1463,19 +1769,27 @@ var shapeCoordinates = {
  * either for individual polygons within each grid cell, or the
  * outline of connected polygons.
  */
-function isoBands(input, minV, bandWidth, options) {
-  var i,
-    j,
-    settings,
+function isoBands(
+  input: number[][] | QuadTree,
+  minV: number | number[],
+  bandWidth: number | number[],
+  options?: Options
+) {
+  let i: number,
+    j: number,
+    settings: IsoBandOptions,
     useQuadTree = false,
     tree = null,
     root = null,
     data = null,
-    cellGrid = null,
+    cellGrid: BandCellGrid = [],
     multiBand = false,
     bw = [],
-    bandPolygons = [],
-    ret = [];
+    bandPolygons: Ring[],
+    ret: (Ring | Ring[])[] = [];
+
+  /* Defaults for optional args */
+  options = options ?? {};
 
   /* basic input validation */
   if (!input) throw new Error("data is required");
@@ -1538,7 +1852,7 @@ function isoBands(input, minV, bandWidth, options) {
 
     if (isNaN(+bandWidth)) throw new Error("bandWidth must be a number");
 
-    bandWidth = [bandWidth];
+    bandWidth = [bandWidth as number]; // singular value (not an array)
   }
 
   /* create QuadTree root node if not already present */
@@ -1550,17 +1864,12 @@ function isoBands(input, minV, bandWidth, options) {
 
   if (settings.verbose) {
     if (settings.polygons)
-      console.log(
-        "MarchingSquaresJS-isoBands: returning single polygons for each grid cell"
-      );
-    else
-      console.log(
-        "MarchingSquaresJS-isoBands: returning polygon paths for entire data grid"
-      );
+      console.log("isoBands: returning single polygons for each grid cell");
+    else console.log("isoBands: returning polygon paths for entire data grid");
 
     if (multiBand)
       console.log(
-        "MarchingSquaresJS-isoBands: multiple bands requested, returning array of band polygons instead of polygons for a single band"
+        "isoBands: multiple bands requested, returning array of band polygons instead of polygons for a single band"
       );
   }
 
@@ -1576,7 +1885,7 @@ function isoBands(input, minV, bandWidth, options) {
 
     if (settings.verbose)
       console.log(
-        "MarchingSquaresJS-isoBands: computing isobands for [" +
+        "isoBands: computing isobands for [" +
           lowerBound +
           ":" +
           (lowerBound + bandWidth[b]) +
@@ -1587,25 +1896,27 @@ function isoBands(input, minV, bandWidth, options) {
       /* compose list of polygons for each single cell */
       if (useQuadTree) {
         /* go through list of cells retrieved from QuadTree */
-        root
+        root!
           .cellsInBand(settings.minV, settings.maxV, true)
           .forEach(function (c) {
-            bandPolygons = bandPolygons.concat(
-              cell2Polygons(
-                prepareCell(data, c.x, c.y, settings),
-                c.x,
-                c.y,
-                settings
-              )
-            );
+            const cell = prepareCell(data, c.x, c.y, settings);
+            if (cell) {
+              bandPolygons = bandPolygons.concat(
+                cell2Polygons(cell, c.x, c.y, settings)
+              );
+            }
           });
       } else {
         /* go through entire array of input data */
         for (j = 0; j < data.length - 1; ++j) {
-          for (i = 0; i < data[0].length - 1; ++i)
-            bandPolygons = bandPolygons.concat(
-              cell2Polygons(prepareCell(data, i, j, settings), i, j, settings)
-            );
+          for (i = 0; i < data[0].length - 1; ++i) {
+            const cell = prepareCell(data, i, j, settings);
+            if (cell) {
+              bandPolygons = bandPolygons.concat(
+                cell2Polygons(cell, i, j, settings)
+              );
+            }
+          }
         }
       }
     } else {
@@ -1616,7 +1927,7 @@ function isoBands(input, minV, bandWidth, options) {
       /* compose list of polygons for entire input grid */
       if (useQuadTree) {
         /* collect the cells */
-        root
+        root!
           .cellsInBand(settings.minV, settings.maxV, false)
           .forEach(function (c) {
             cellGrid[c.x][c.y] = prepareCell(data, c.x, c.y, settings);
@@ -1634,8 +1945,11 @@ function isoBands(input, minV, bandWidth, options) {
     }
 
     /* finally, add polygons to output array */
-    if (multiBand) ret.push(bandPolygons);
-    else ret = bandPolygons;
+    if (multiBand) {
+      ret.push(bandPolygons);
+    } else {
+      ret = bandPolygons;
+    }
 
     if (typeof settings.successCallback === "function")
       settings.successCallback(ret, lowerBound, bandWidth[b]);
@@ -1749,7 +2063,14 @@ function isoBands(input, minV, bandWidth, options) {
  * ####################################
  */
 
-function computeCenterAverage(bl, br, tr, tl, minV, maxV) {
+function computeCenterAverage(
+  bl: number,
+  br: number,
+  tr: number,
+  tl: number,
+  minV: number,
+  maxV: number
+) {
   var average = (tl + tr + br + bl) / 4;
 
   if (average > maxV) return 2; /* above isoband limits */
@@ -1759,7 +2080,12 @@ function computeCenterAverage(bl, br, tr, tl, minV, maxV) {
   return 1; /* within isoband limits */
 }
 
-function prepareCell(grid, x, y, opt) {
+function prepareCell(
+  grid: number[][],
+  x: number,
+  y: number,
+  opt: IsoBandOptions
+) {
   var cell, center_avg;
 
   /*  compose the 4-trit corner representation */
@@ -1768,8 +2094,8 @@ function prepareCell(grid, x, y, opt) {
   var x2 = grid[y + 1][x + 1];
   var x1 = grid[y][x + 1];
   var x0 = grid[y][x];
-  var minV = opt.minV;
-  var maxV = opt.maxV;
+  const minV = opt.minV!; // assume minV defined
+  const maxV = opt.maxV!; // assume maxV defined
 
   /*
    * Note that missing data within the grid will result

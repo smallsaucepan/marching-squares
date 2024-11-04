@@ -4,7 +4,7 @@
  *
  *  Note, that we assume that 'a' and 'b' have unit distance (i.e. 1)
  */
-function linear(a, b, v) {
+function linear(a: number, b: number, v: number) {
   if (a < b) return (v - a) / (b - a);
 
   return (a - v) / (a - b);
@@ -19,7 +19,7 @@ function linear(a, b, v) {
  *
  *  Note, that we assume that 'a' and 'b' have unit distance (i.e. 1)
  */
-function linear_ab(a, b, v0, v1) {
+function linear_ab(a: number, b: number, v0: number, v1: number) {
   var tmp;
 
   if (v0 > v1) {
@@ -46,7 +46,7 @@ function linear_ab(a, b, v0, v1) {
  *
  *  Note, that we assume that 'a' and 'b' have unit distance (i.e. 1)
  */
-function linear_a(a, b, minV, maxV) {
+function linear_a(a: number, b: number, minV: number, maxV: number) {
   if (a < b) return (minV - a) / (b - a);
 
   return (a - maxV) / (a - b);
@@ -60,7 +60,7 @@ function linear_a(a, b, minV, maxV) {
  *
  *  Note, that we assume that 'a' and 'b' have unit distance (i.e. 1)
  */
-function linear_b(a, b, minV, maxV) {
+function linear_b(a: number, b: number, minV: number, maxV: number) {
   if (a < b) return (maxV - a) / (b - a);
 
   return (a - minV) / (a - b);

@@ -1,9 +1,11 @@
-/* eslint no-console: ["error", { allow: ["log"] }] */
-/* eslint-env browser,node */
-
-import { isoLineOptions } from "./options.js";
+import {
+  isoLineOptions,
+  type Options,
+  type IsoLineOptions,
+} from "./options.js";
 import { cell2Polygons, traceLinePaths } from "./polygons.js";
-import { QuadTree } from "./quadtree.js";
+import { QuadTree, type TreeNode } from "./quadtree.js";
+import { type Ring, type LineCell, type LineCellGrid } from "./common.js";
 
 /*
  * Compute the iso lines for a scalar 2D field given
@@ -11,18 +13,25 @@ import { QuadTree } from "./quadtree.js";
  * Algorithm. The function returns a list of path coordinates
  */
 
-function isoLines(input, threshold, options) {
-  var settings,
-    i,
-    j,
+function isoLines(
+  input: number[][] | QuadTree,
+  threshold: number | number[],
+  options?: Options
+) {
+  let settings: IsoLineOptions,
+    i: number,
+    j: number,
     useQuadTree = false,
     multiLine = false,
-    tree = null,
-    root = null,
-    data = null,
-    cellGrid = null,
-    linePolygons = null,
-    ret = [];
+    tree: QuadTree | null = null,
+    root: TreeNode | null = null,
+    data: number[][],
+    cellGrid: LineCellGrid = [],
+    linePolygons: Ring[],
+    ret: (Ring | Ring[])[] = [];
+
+  /* Defaults for optional args */
+  options = options ?? {};
 
   /* validation */
   if (!input) throw new Error("data is required");
@@ -76,16 +85,16 @@ function isoLines(input, threshold, options) {
   if (settings.verbose) {
     if (settings.polygons)
       console.log(
-        "MarchingSquaresJS-isoLines: returning single lines (polygons) for each grid cell"
+        "isoLines: returning single lines (polygons) for each grid cell"
       );
     else
       console.log(
-        "MarchingSquaresJS-isoLines: returning line paths (polygons) for entire data grid"
+        "isoLines: returning line paths (polygons) for entire data grid"
       );
 
     if (multiLine)
       console.log(
-        "MarchingSquaresJS-isoLines: multiple lines requested, returning array of line paths instead of lines for a single threshold"
+        "isoLines: multiple lines requested, returning array of line paths instead of lines for a single threshold"
       );
   }
 
@@ -107,25 +116,27 @@ function isoLines(input, threshold, options) {
       /* compose list of polygons for each single cell */
       if (useQuadTree) {
         /* go through list of cells retrieved from QuadTree */
-        root
+        root!
           .cellsBelowThreshold(settings.threshold, true)
           .forEach(function (c) {
-            linePolygons = linePolygons.concat(
-              cell2Polygons(
-                prepareCell(data, c.x, c.y, settings),
-                c.x,
-                c.y,
-                settings
-              )
-            );
+            const cell = prepareCell(data, c.x, c.y, settings);
+            if (cell) {
+              linePolygons = linePolygons.concat(
+                cell2Polygons(cell, c.x, c.y, settings)
+              );
+            }
           });
       } else {
         /* go through entire array of input data */
         for (j = 0; j < data.length - 1; ++j) {
-          for (i = 0; i < data[0].length - 1; ++i)
-            linePolygons = linePolygons.concat(
-              cell2Polygons(prepareCell(data, i, j, settings), i, j, settings)
-            );
+          for (i = 0; i < data[0].length - 1; ++i) {
+            const cell = prepareCell(data, i, j, settings);
+            if (cell) {
+              linePolygons = linePolygons.concat(
+                cell2Polygons(cell, i, j, settings)
+              );
+            }
+          }
         }
       }
     } else {
@@ -136,7 +147,7 @@ function isoLines(input, threshold, options) {
       /* compose list of polygons for entire input grid */
       if (useQuadTree) {
         /* collect the cells */
-        root
+        root!
           .cellsBelowThreshold(settings.threshold, false)
           .forEach(function (c) {
             cellGrid[c.x][c.y] = prepareCell(data, c.x, c.y, settings);
@@ -154,11 +165,15 @@ function isoLines(input, threshold, options) {
     }
 
     /* finally, add polygons to output array */
-    if (multiLine) ret.push(linePolygons);
-    else ret = linePolygons;
+    if (multiLine) {
+      ret.push(linePolygons);
+    } else {
+      ret = linePolygons;
+    }
 
-    if (typeof settings.successCallback === "function")
+    if (typeof settings.successCallback === "function") {
       settings.successCallback(ret, t);
+    }
   });
 
   return ret;
@@ -175,15 +190,20 @@ function isoLines(input, threshold, options) {
  * ################################
  */
 
-function prepareCell(grid, x, y, settings) {
-  var left, right, top, bottom, average, cell;
+function prepareCell(
+  grid: number[][],
+  x: number,
+  y: number,
+  settings: IsoLineOptions
+): LineCell | undefined {
+  var left, right, top, bottom, average, cell: LineCell;
 
-  var cval = 0;
-  var x3 = grid[y + 1][x];
-  var x2 = grid[y + 1][x + 1];
-  var x1 = grid[y][x + 1];
-  var x0 = grid[y][x];
-  var threshold = settings.threshold;
+  let cval = 0;
+  const x3 = grid[y + 1][x];
+  const x2 = grid[y + 1][x + 1];
+  const x1 = grid[y][x + 1];
+  const x0 = grid[y][x];
+  const threshold = settings.threshold!; // assume threshold defined
 
   /*
    * Note that missing data within the grid will result
