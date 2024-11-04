@@ -22,8 +22,20 @@
   ],
   "license": "AGPL-3.0",
   "type": "module",
-  "main": "./dist/marchingsquares.js",
-  "module": "./dist/marchingsquares-esm.js",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/cjs/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./dist/esm/index.js",
+        "types": "./dist/esm/index.d.ts"
+      },
+      "default": {
+        "default": "./dist/cjs/index.cjs",
+        "types": "./dist/cjs/index.d.cts"
+      }
+    }
+  },
   "directories": {
     "example": "./example",
     "dist": "./dist"
