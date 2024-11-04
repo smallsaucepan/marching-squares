@@ -1,11 +1,24 @@
 {
-  "name": "marchingsquares",
-  "description": "MarchingSquaresJS - An implementation of the Marching Squares algorithm featuring Isocontour and Isoband computation.",
-  "version": "1.3.3",
-  "author": "Ronny Lorenz <ronny@tbi.univie.ac.at>",
+  "name": "marching-squares-ts",
+  "description": "A TypeScript implementation of the marching squares algorithm featuring isoline and isoband computation.",
+  "version": "2.0.0",
+  "author": {
+    "name": "James Beard",
+    "email": "james@smallsaucepan.com",
+    "url": "https://github.com/smallsaucepan"
+  },
   "contributors": [
-    {"name": "Stefano Borghi"},
-    {"name": "Peter Kerpedjiev"}
+    {
+      "name": "Ronny Lorenz",
+      "email": "ronny@tbi.univie.ac.at",
+      "url": "https://github.com/RaumZeit"
+    },
+    {
+      "name": "Stefano Borghi"
+    },
+    {
+      "name": "Peter Kerpedjiev"
+    }
   ],
   "license": "AGPL-3.0",
   "main": "./dist/marchingsquares.js",
@@ -20,13 +33,13 @@
     "pretest": "rollup -c rollup.config.test.js",
     "test": "node ./test/test.js"
   },
-  "homepage": "https://github.com/RaumZeit/MarchingSquares.js/blob/master/README.md",
+  "homepage": "https://github.com/smallsaucepan/marching-squares-ts",
   "repository": {
     "type": "git",
-    "url": "git://github.com/RaumZeit/MarchingSquares.js.git"
+    "url": "git://github.com/smallsaucepan/marching-squares-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/RaumZeit/MarchingSquares.js/issues"
+    "url": "https://github.com/smallsaucepan/marching-squares-ts/issues"
   },
   "keywords": [
     "marchingsquares",
@@ -34,14 +47,25 @@
     "squares",
     "isocontour",
     "isoband",
-    "isoline"
+    "isoline",
+    "topography",
+    "elevation",
+    "interpolation"
   ],
   "devDependencies": {
+    "@types/tape": "^5.6.4",
     "eslint": "5.0.1",
     "load-json-file": "^2.0.0",
     "rollup": "^0.60.7",
     "rollup-plugin-eslint": "^4.0.0",
     "rollup-plugin-uglify": "^4.0.0",
-    "tape": "^4.9.1"
+    "tap-nirvana": "^1.1.0",
+    "tape": "^4.17.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
   }
 }

@@ -39,6 +39,5 @@ Thumbs.db
 *.zip
 
 # generated content
-package-lock.json
 dist/
 
