@@ -22,6 +22,7 @@
   ],
   "license": "AGPL-3.0",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
   "exports": {
@@ -41,7 +42,6 @@
     "dist": "./dist"
   },
   "scripts": {
-    "lint": "eslint --fix src/**",
     "build": "rollup -c",
     "pretest": "rollup -c rollup.config.test.js",
     "test": "node ./test/test.js"
@@ -66,13 +66,12 @@
     "interpolation"
   ],
   "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
     "@tsconfig/node18": "^18.2.4",
     "@types/tape": "^5.6.4",
-    "eslint": "5.0.1",
     "load-json-file": "^7.0.1",
-    "rollup": "^0.60.7",
-    "rollup-plugin-eslint": "^4.0.0",
-    "rollup-plugin-uglify": "^4.0.0",
+    "rollup": "^4.24.4",
     "tap-nirvana": "^1.1.0",
     "tape": "^4.17.0",
     "tsup": "^8.3.5",
