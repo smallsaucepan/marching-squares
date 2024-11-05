@@ -4,16 +4,17 @@ import {
   type IsoLineOptions,
 } from "./options.js";
 import {
-  type LineCell,
-  type BandCell,
-  type Ring,
-  type BandCellGrid,
-  type LineCellGrid,
+  type Coord,
   type Path,
-  type LineEntryVia,
-  type BandEntryVia,
+  type Ring,
+  type LineEntry,
   type LineEdge,
+  type LineCell,
+  type LineCellGrid,
+  type BandEntry,
   type BandEdge,
+  type BandCell,
+  type BandCellGrid,
 } from "./common.js";
 
 function cell2Polygons(
@@ -43,7 +44,7 @@ function entry_coordinate(
   y: number,
   mode: 0 | 1 | 2 | 3,
   path: Path
-) {
+): Coord {
   if (mode === 0) {
     /* down */
     x += 1;
@@ -63,7 +64,7 @@ function entry_coordinate(
   return [x, y];
 }
 
-function skip_coordinate(x: number, y: number, mode: 0 | 1 | 2 | 3) {
+function skip_coordinate(x: number, y: number, mode: 0 | 1 | 2 | 3): Coord {
   if (mode === 0) {
     /* down */
     x++;
@@ -169,16 +170,14 @@ function traceBandPaths(
   settings: IsoBandOptions
 ) {
   var nextedge,
-    path,
     e,
     ee: BandEdge,
     s,
-    ve: BandEntryVia,
-    enter: BandEntryVia,
+    ve: BandEntry,
+    enter: BandEntry,
     x,
     y,
     finalized,
-    origin,
     cc,
     dir: 0 | 1 | 2 | 3,
     count,
@@ -196,7 +195,7 @@ function traceBandPaths(
    * 2 ... "up",
    * 3 ... "right"
    */
-  const valid_entries: BandEntryVia[][] = [
+  const valid_entries: BandEntry[][] = [
     ["rt", "rb"] /* down */,
     ["br", "bl"] /* left */,
     ["lb", "lt"] /* up */,
@@ -204,7 +203,7 @@ function traceBandPaths(
   ];
   const add_x = [0, -1, 0, 1];
   const add_y = [-1, 0, 1, 0];
-  const available_starts: BandEntryVia[] = [
+  const available_starts: BandEntry[] = [
     "bl",
     "lb",
     "lt",
@@ -214,7 +213,7 @@ function traceBandPaths(
     "rb",
     "br",
   ];
-  const entry_dir: { [K in BandEntryVia]: number } = {
+  const entry_dir: { [K in BandEntry]: number } = {
     bl: 1,
     br: 1,
     lb: 2,
@@ -256,13 +255,13 @@ function traceBandPaths(
         if (typeof cell?.edges[nextedge] !== "object") continue;
 
         /* start a new, full path */
-        path = [];
+        const path: Path = [];
         ee = cell.edges[nextedge]!; // assume edge is defined
         enter = nextedge;
         x = i;
         y = j;
         finalized = false;
-        origin = [i + ee.path[0][0], j + ee.path[0][1]];
+        const origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
 
         /* add start coordinate */
         path.push(origin);
@@ -409,19 +408,17 @@ function traceLinePaths(
   var e,
     ee: LineEdge,
     cc,
-    path,
     enter,
     x,
     y,
     finalized,
-    origin,
     point,
     dir: 0 | 1 | 2 | 3,
     count,
     found_entry,
     ve;
 
-  var polygons = [];
+  const polygons: Ring[] = [];
   const rows = data.length - 1;
   const cols = data[0].length - 1;
 
@@ -432,7 +429,7 @@ function traceLinePaths(
    * 2 ... "up",
    * 3 ... "right"
    */
-  const valid_entries: LineEntryVia[] = [
+  const valid_entries: LineEntry[] = [
     "right" /* down */,
     "bottom" /* left */,
     "left" /* up */,
@@ -481,13 +478,13 @@ function traceLinePaths(
         if (typeof cell?.edges[nextedge] !== "object") continue;
 
         /* start a new, full path */
-        path = [];
+        const path: Path = [];
         ee = cell.edges[nextedge];
         enter = nextedge;
         x = i;
         y = j;
         finalized = false;
-        origin = [i + ee.path[0][0], j + ee.path[0][1]];
+        const origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
 
         /* add start coordinate */
         path.push(origin);

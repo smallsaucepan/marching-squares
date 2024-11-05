@@ -1,21 +1,23 @@
 type SuccessCallback = (
-  pathArray: any,
+  pathArray: (Ring | Ring[])[],
   thresholdOrlowerBound: number,
   bandWidth?: number
 ) => void;
 
-type Ring = number[][];
+type Coord = [number, number];
 
-type Path = number[][];
+type Ring = Coord[];
 
-type LineEnterVia = "top" | "right" | "bottom" | "left";
+type Path = Coord[];
+
+type LineEntry = "top" | "right" | "bottom" | "left";
 
 interface LineEdge {
   path: Path;
   move: {
     x: number;
     y: number;
-    enter: LineEnterVia;
+    enter: LineEntry;
   };
 }
 
@@ -36,14 +38,14 @@ interface LineCell {
 
 type LineCellGrid = Array<Array<LineCell | undefined>>;
 
-type BandEnterVia = "tl" | "tr" | "br" | "bl" | "lt" | "rt" | "rb" | "lb";
+type BandEntry = "tl" | "tr" | "br" | "bl" | "lt" | "rt" | "rb" | "lb";
 
 interface BandEdge {
   path: Path;
   move: {
     x: number;
     y: number;
-    enter: BandEnterVia;
+    enter: BandEntry;
   };
 }
 
@@ -71,15 +73,16 @@ interface BandCell {
 type BandCellGrid = Array<Array<BandCell | undefined>>;
 
 export {
+  Coord,
   SuccessCallback,
+  Path,
   Ring,
   LineCell,
   BandCell,
   BandCellGrid,
   LineCellGrid,
-  Path,
-  BandEnterVia as BandEntryVia,
-  LineEnterVia as LineEntryVia,
+  BandEntry,
+  LineEntry,
   LineEdge,
   BandEdge,
 };
