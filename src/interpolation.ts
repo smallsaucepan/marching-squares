@@ -20,12 +20,8 @@ function linear(a: number, b: number, v: number) {
  *  Note, that we assume that 'a' and 'b' have unit distance (i.e. 1)
  */
 function linear_ab(a: number, b: number, v0: number, v1: number) {
-  var tmp;
-
   if (v0 > v1) {
-    tmp = v0;
-    v0 = v1;
-    v1 = tmp;
+    [v0, v1] = [v1, v0]; // swap
   }
 
   if (a < b) {

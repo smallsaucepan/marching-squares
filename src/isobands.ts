@@ -2071,7 +2071,7 @@ function computeCenterAverage(
   minV: number,
   maxV: number
 ) {
-  var average = (tl + tr + br + bl) / 4;
+  const average = (tl + tr + br + bl) / 4;
 
   if (average > maxV) return 2; /* above isoband limits */
 
@@ -2086,16 +2086,14 @@ function prepareCell(
   y: number,
   opt: IsoBandOptions
 ) {
-  var cell, center_avg;
-
   /*  compose the 4-trit corner representation */
-  var cval = 0;
-  var x3 = grid[y + 1][x];
-  var x2 = grid[y + 1][x + 1];
-  var x1 = grid[y][x + 1];
-  var x0 = grid[y][x];
-  const minV = opt.minV!; // assume minV defined
-  const maxV = opt.maxV!; // assume maxV defined
+  let cval = 0;
+  const x3 = grid[y + 1][x],
+    x2 = grid[y + 1][x + 1],
+    x1 = grid[y][x + 1],
+    x0 = grid[y][x],
+    minV = opt.minV!, // assume minV defined
+    maxV = opt.maxV!; // assume maxV defined
 
   /*
    * Note that missing data within the grid will result
@@ -2152,9 +2150,9 @@ function prepareCell(
    * 1 ... within iso band
    * 2 ... above isoband
    */
-  center_avg = 0;
+  let center_avg = 0;
 
-  cell = {
+  let cell = {
     cval: cval,
     polygons: [],
     edges: {},

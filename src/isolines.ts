@@ -196,14 +196,12 @@ function prepareCell(
   y: number,
   settings: IsoLineOptions
 ): LineCell | undefined {
-  var left, right, top, bottom, average, cell: LineCell;
-
   let cval = 0;
-  const x3 = grid[y + 1][x];
-  const x2 = grid[y + 1][x + 1];
-  const x1 = grid[y][x + 1];
-  const x0 = grid[y][x];
-  const threshold = settings.threshold!; // assume threshold defined
+  const x3 = grid[y + 1][x],
+    x2 = grid[y + 1][x + 1],
+    x1 = grid[y][x + 1],
+    x0 = grid[y][x],
+    threshold = settings.threshold!; // assume threshold defined
 
   /*
    * Note that missing data within the grid will result
@@ -254,7 +252,7 @@ function prepareCell(
   cval = +cval;
 
   /* compose the cell object */
-  cell = {
+  const cell: LineCell = {
     cval: cval,
     polygons: [],
     edges: {},
@@ -269,6 +267,8 @@ function prepareCell(
    * with the cell borders and (i) add edges for polygon
    * trace-back, or (ii) a list of small closed polygons
    */
+  let left, right, top, bottom, average;
+
   switch (cval) {
     case 0:
       if (settings.polygons)

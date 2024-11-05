@@ -130,7 +130,7 @@ class TreeNode {
     upperBound: number,
     subsumed: boolean | undefined
   ) {
-    var cells: Cell[] = [];
+    let cells: Cell[] = [];
 
     subsumed = typeof subsumed === "undefined" ? true : subsumed;
 
@@ -224,8 +224,6 @@ class QuadTree {
   root: TreeNode;
 
   constructor(data: number[][]) {
-    var i, cols;
-
     /* do some input checking */
     if (!data) throw new Error("data is required");
 
@@ -235,11 +233,11 @@ class QuadTree {
     if (data.length < 2) throw new Error("data must contain at least two rows");
 
     /* check if we've got a regular grid */
-    cols = data[0].length;
+    const cols = data[0].length;
 
     if (cols < 2) throw new Error("data must contain at least two columns");
 
-    for (i = 1; i < data.length; i++) {
+    for (let i = 1; i < data.length; i++) {
       if (!Array.isArray(data[i]))
         throw new Error("Row " + i + " is not an array");
 

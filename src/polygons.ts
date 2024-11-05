@@ -8,11 +8,9 @@ import {
   type Path,
   type Ring,
   type LineEntry,
-  type LineEdge,
   type LineCell,
   type LineCellGrid,
   type BandEntry,
-  type BandEdge,
   type BandCell,
   type BandCellGrid,
 } from "./common.js";
@@ -88,13 +86,11 @@ function requireFrame(
   lowerBound: number,
   upperBound: number
 ) {
-  var frameRequired, cols, rows, i, j;
+  let frameRequired = true;
+  const cols = data[0].length;
+  const rows = data.length;
 
-  frameRequired = true;
-  cols = data[0].length;
-  rows = data.length;
-
-  for (j = 0; j < rows; j++) {
+  for (let j = 0; j < rows; j++) {
     if (
       data[j][0] < lowerBound ||
       data[j][0] > upperBound ||
@@ -117,7 +113,7 @@ function requireFrame(
   }
 
   if (frameRequired)
-    for (i = 0; i < cols - 1; i++) {
+    for (let i = 0; i < cols - 1; i++) {
       if (
         data[0][i] < lowerBound ||
         data[0][i] > upperBound ||
@@ -133,13 +129,11 @@ function requireFrame(
 }
 
 function requireLineFrame(data: number[][], threshold: number) {
-  var frameRequired, cols, rows, i, j;
+  let frameRequired = true;
+  const cols = data[0].length;
+  const rows = data.length;
 
-  frameRequired = true;
-  cols = data[0].length;
-  rows = data.length;
-
-  for (j = 0; j < rows; j++) {
+  for (let j = 0; j < rows; j++) {
     if (data[j][0] >= threshold || data[j][cols - 1] >= threshold) {
       frameRequired = false;
       break;
@@ -154,7 +148,7 @@ function requireLineFrame(data: number[][], threshold: number) {
   }
 
   if (frameRequired)
-    for (i = 0; i < cols - 1; i++) {
+    for (let i = 0; i < cols - 1; i++) {
       if (data[0][i] >= threshold || data[rows - 1][i] > threshold) {
         frameRequired = false;
         break;
@@ -169,21 +163,6 @@ function traceBandPaths(
   cellGrid: BandCellGrid,
   settings: IsoBandOptions
 ) {
-  var nextedge,
-    e,
-    ee: BandEdge,
-    s,
-    ve: BandEntry,
-    enter: BandEntry,
-    x,
-    y,
-    finalized,
-    cc,
-    dir: 0 | 1 | 2 | 3,
-    count,
-    point,
-    found_entry;
-
   const polygons: Ring[] = [];
   const rows = data.length - 1;
   const cols = data[0].length - 1;
@@ -246,29 +225,28 @@ function traceBandPaths(
   /* finally, start tracing back first polygon(s) */
   cellGrid.forEach(function (a, i) {
     a.forEach(function (cell, j) {
-      nextedge = null;
-
       /* trace paths for all available edges that go through this cell */
-      for (e = 0; e < 8; e++) {
-        nextedge = available_starts[e];
+      for (let e = 0; e < 8; e++) {
+        const nextedge = available_starts[e];
 
         if (typeof cell?.edges[nextedge] !== "object") continue;
 
         /* start a new, full path */
-        const path: Path = [];
-        ee = cell.edges[nextedge]!; // assume edge is defined
-        enter = nextedge;
-        x = i;
-        y = j;
-        finalized = false;
-        const origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
+        let ee = cell.edges[nextedge]!, // assume edge is defined
+          enter = nextedge,
+          x = i,
+          y = j,
+          finalized = false;
+
+        const path: Path = [],
+          origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
 
         /* add start coordinate */
         path.push(origin);
 
         /* start traceback */
         while (!finalized) {
-          cc = cellGrid[x][y];
+          let cc = cellGrid[x][y];
 
           if (typeof cc?.edges[enter] !== "object") break;
 
@@ -278,7 +256,7 @@ function traceBandPaths(
           delete cc.edges[enter];
 
           /* add last point of edge to path arra, since we extend a polygon */
-          point = ee.path[1];
+          const point = ee.path[1];
           point[0] += x;
           point[1] += y;
           path.push(point);
@@ -292,8 +270,8 @@ function traceBandPaths(
             typeof cellGrid[x] === "undefined" ||
             typeof cellGrid[x][y] === "undefined"
           ) {
-            dir = 0;
-            count = 0;
+            let dir: 0 | 1 | 2 | 3 = 0,
+              count = 0;
 
             if (x === cols) {
               x--;
@@ -317,8 +295,8 @@ function traceBandPaths(
               break;
             }
 
-            while (1) {
-              found_entry = false;
+            while (true) {
+              let found_entry = false;
 
               if (count > 4)
                 throw new Error(
@@ -334,8 +312,8 @@ function traceBandPaths(
                 cc = cellGrid[x][y];
 
                 /* check for re-entry */
-                for (s = 0; s < valid_entries[dir].length; s++) {
-                  ve = valid_entries[dir][s];
+                for (let s = 0; s < valid_entries[dir].length; s++) {
+                  const ve = valid_entries[dir][s];
                   if (typeof cc?.edges[ve] === "object") {
                     /* found re-entry */
                     ee = cc.edges[ve]!; // assume edge is defined
@@ -405,19 +383,6 @@ function traceLinePaths(
   cellGrid: LineCellGrid,
   settings: IsoLineOptions
 ) {
-  var e,
-    ee: LineEdge,
-    cc,
-    enter,
-    x,
-    y,
-    finalized,
-    point,
-    dir: 0 | 1 | 2 | 3,
-    count,
-    found_entry,
-    ve;
-
   const polygons: Ring[] = [];
   const rows = data.length - 1;
   const cols = data[0].length - 1;
@@ -472,26 +437,27 @@ function traceLinePaths(
   cellGrid.forEach(function (a, i) {
     a.forEach(function (cell, j) {
       /* trace paths for all available edges that go through this cell */
-      for (e = 0; e < 4; e++) {
+      for (let e = 0; e < 4; e++) {
         const nextedge = valid_entries[e];
 
         if (typeof cell?.edges[nextedge] !== "object") continue;
 
         /* start a new, full path */
-        const path: Path = [];
-        ee = cell.edges[nextedge];
-        enter = nextedge;
-        x = i;
-        y = j;
-        finalized = false;
-        const origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
+        let ee = cell.edges[nextedge],
+          enter = nextedge,
+          x = i,
+          y = j,
+          finalized = false;
+
+        const path: Path = [],
+          origin: Coord = [i + ee.path[0][0], j + ee.path[0][1]];
 
         /* add start coordinate */
         path.push(origin);
 
         /* start traceback */
         while (!finalized) {
-          cc = cellGrid[x][y];
+          let cc = cellGrid[x][y];
 
           if (typeof cc?.edges[enter] !== "object") break;
 
@@ -501,7 +467,7 @@ function traceLinePaths(
           delete cc.edges[enter];
 
           /* add last point of edge to path arra, since we extend a polygon */
-          point = ee.path[1];
+          const point = ee.path[1];
           point[0] += x;
           point[1] += y;
           path.push(point);
@@ -517,8 +483,8 @@ function traceLinePaths(
           ) {
             if (!settings.linearRing) break;
 
-            dir = 0;
-            count = 0;
+            let dir: 0 | 1 | 2 | 3 = 0,
+              count = 0;
 
             if (x === cols) {
               x--;
@@ -540,8 +506,8 @@ function traceLinePaths(
               break;
             }
 
-            while (1) {
-              found_entry = false;
+            while (true) {
+              let found_entry = false;
 
               if (count > 4)
                 throw new Error(
@@ -557,7 +523,7 @@ function traceLinePaths(
                 cc = cellGrid[x][y];
 
                 /* check for re-entry */
-                ve = valid_entries[dir];
+                const ve = valid_entries[dir];
                 if (typeof cc?.edges[ve] === "object") {
                   /* found re-entry */
                   ee = cc.edges[ve]!; // assume edge is defined
