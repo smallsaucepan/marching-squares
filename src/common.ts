@@ -1,7 +1,7 @@
 type SuccessCallback = (
-  pathArray: (Ring | Ring[])[],
-  thresholdOrlowerBound: number,
-  bandWidth?: number
+  pathArray: Ring[][],
+  threshold: number,
+  bandwidth?: number
 ) => void;
 
 type Coord = [number, number];

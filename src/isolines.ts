@@ -15,28 +15,24 @@ import { type Ring, type LineCell, type LineCellGrid } from "./common.js";
 
 function isoLines(
   input: number[][] | QuadTree,
-  threshold: number | number[],
+  thresholds: number[],
   options?: Options
 ) {
   let settings: IsoLineOptions,
     i: number,
     j: number,
     useQuadTree = false,
-    multiLine = false,
     tree: QuadTree | null = null,
     root: TreeNode | null = null,
     data: number[][],
     cellGrid: LineCellGrid = [],
     linePolygons: Ring[],
-    ret: (Ring | Ring[])[] = [];
+    ret: Ring[][] = [];
 
   /* Defaults for optional args */
   options = options ?? {};
 
   /* validation */
-  if (!input) throw new Error("data is required");
-  if (threshold === undefined || threshold === null)
-    throw new Error("threshold is required");
   if (!!options && typeof options !== "object")
     throw new Error("options must be an object");
 
@@ -44,6 +40,7 @@ function isoLines(
   settings = isoLineOptions(options);
 
   /* check for input data */
+  if (!input) throw new Error("data is required");
   if (input instanceof QuadTree) {
     tree = input;
     root = input.root;
@@ -57,23 +54,20 @@ function isoLines(
     );
   }
 
-  /* check and prepare input threshold(s) */
-  if (Array.isArray(threshold)) {
-    multiLine = true;
+  if (thresholds === undefined || thresholds === null)
+    throw new Error("thresholds is required");
+  if (!Array.isArray(thresholds))
+    throw new Error("thresholds must be an array");
 
-    /* activate QuadTree optimization if not explicitly forbidden by user settings */
-    if (!settings.noQuadTree) useQuadTree = true;
+  /* check and prepare input thresholds */
 
-    /* check if all minV are numbers */
-    for (i = 0; i < threshold.length; i++)
-      if (isNaN(+threshold[i]))
-        throw new Error("threshold[" + i + "] is not a number");
-  } else {
-    if (isNaN(+threshold))
-      throw new Error("threshold must be a number or array of numbers");
+  /* activate QuadTree optimization if not explicitly forbidden by user settings */
+  if (!settings.noQuadTree) useQuadTree = true;
 
-    threshold = [threshold];
-  }
+  /* check if all thresholds are numbers */
+  for (i = 0; i < thresholds.length; i++)
+    if (isNaN(+thresholds[i]))
+      throw new Error("thresholds[" + i + "] is not a number");
 
   /* create QuadTree root node if not already present */
   if (useQuadTree && !root) {
@@ -91,17 +85,12 @@ function isoLines(
       console.log(
         "isoLines: returning line paths (polygons) for entire data grid"
       );
-
-    if (multiLine)
-      console.log(
-        "isoLines: multiple lines requested, returning array of line paths instead of lines for a single threshold"
-      );
   }
 
   /* Done with all input validation, now let's start computing stuff */
 
   /* loop over all threhsold values */
-  threshold.forEach(function (t, i) {
+  thresholds.forEach(function (t, i) {
     linePolygons = [];
 
     /* store bounds for current computation in settings object */
@@ -165,11 +154,7 @@ function isoLines(
     }
 
     /* finally, add polygons to output array */
-    if (multiLine) {
-      ret.push(linePolygons);
-    } else {
-      ret = linePolygons;
-    }
+    ret.push(linePolygons);
 
     if (typeof settings.successCallback === "function") {
       settings.successCallback(ret, t);

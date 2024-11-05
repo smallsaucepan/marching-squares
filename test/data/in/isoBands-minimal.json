@@ -1,8 +1,8 @@
 {
   "matrix": [
-    [ 1, 1 ],
-    [ 1, 5 ]
+    [1, 1],
+    [1, 5]
   ],
-  "lowerBand": 1,
-  "upperBand": 3
+  "thresholds": [1],
+  "bandwidths": [2]
 }

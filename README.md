@@ -17,11 +17,11 @@ The implementation computes _iso lines_ (_iso contours_) or _iso bands_ for rect
 ## Table of contents
 
 1. [Availability](#availability)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [API Description](#api-description)
-5. [Examples](#examples)
-6. [License](#license)
+1. [Installation](#installation)
+1. [Usage](#usage)
+1. [API](#api)
+1. [Examples](#examples)
+1. [License](#license)
 
 ## Availability
 
@@ -65,7 +65,7 @@ const thresholds = [1, 2];
 const lines = isoLines(data, thresholds);
 ```
 
-This should yield you the data of two lines, which if displayed graphically would look something like this:
+This will yield the data of two lines, which if displayed graphically would look something like this:
 
 Next - iso bands.
 
@@ -85,7 +85,7 @@ const lines = isoBands(data, lowerBounds, bandWidths);
 
 ```
 
-This should yield you the data of two bands, which might look like this if displayed visually:
+This will yield the data of two bands, which might look like this if displayed visually:
 
 ### Optimisations
 
@@ -119,26 +119,20 @@ const lines2 = isoLines(tree, thresholds2); // faster :)
 ### Iso Lines
 
 ```javascript
-function isoLines(data, threshold, options)
+function isoLines(data, thresholds, options)
 ```
 
-Compute _iso lines_ and _iso contours_ for a 2-dimensional scalar field and a (list of) thresholds.
+Compute _iso lines_ for a 2-dimensional scalar field and a list of thresholds.
 
-| Parameter | Description |
-
-| ----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-| `data` | 2-dimensional input data, i.e. the scalar field (must be array of arrays, or pre-processed data object obtained from `new QuadTree()`). This parameter is **mandatory**. |
-
-| `threshold` | A constant numerical value (or array of numerical values) defining the curve function for the _iso line(s)_. This parameter is **mandatory** |
-
-| `options` | An object with attributes allowing for changes in the behavior of this function (See below). This parameter is **optional** |
+| Parameter    | Description                                                                                                                                                              |
+| ------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data`       | 2-dimensional input data, i.e. the scalar field (must be array of arrays, or pre-processed data object obtained from `new QuadTree()`). This parameter is **mandatory**. |
+| `thresholds` | An array of numerical values defining the curve function for the _iso line(s)_. This parameter is **mandatory**                                                          |
+| `options`    | An object with attributes allowing for changes in the behavior of this function (See below). This parameter is **optional**                                              |
 
 #### Returns:
 
-1. If `threshold` is a _single scalar_, an array of paths representing the _iso lines_ for the given `threshold` and input `data`.
-
-2. If `threshold` is an _array of scalars_, an additional array layer wraps the individual arrays of paths for each threshold value.
+An array of arrays of paths representing the _iso lines_ for the given `thresholds` and input `data`. Each element of the top level array represents the results for a single value in `thresholds`. Three threshold values in, three arrays of paths out.
 
 A single path is an array of coordinates where each coordinate, again, is an array with two entries `[ x, y ]` denoting the `x` and `y` position, respectively.
 
@@ -149,28 +143,21 @@ Furthermore, if all values at the border of the input data are below the thresho
 ### Iso Bands
 
 ```javascript
-function isoBands(data, lowerBound, bandWidth, options)
+function isoBands(data, thresholds, bandwidths, options)
 ```
 
 Compute _iso bands_ for a 2-dimensional scalar field, a (list of) lowerBound(s), and a (list of) bandWidth(s).
 
-| Parameter | Description |
-
+| Parameter    | Description                                                                                                                                                              |
 | ------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-| `data` | 2-dimensional input data, i.e. the scalar field (must be array of arrays, or pre-processed data object obtained from `new QuadTree()`). This parameter is **mandatory**. |
-
-| `lowerBound` | A constant numerical value (or array of numerical values) that define(s) the lower bound of the _iso band_. This parameter is **mandatory**. |
-
-| `bandWidth` | A constant numerical value (or array of numerical values) that defines the width(s) the _iso band_, i.e. the range of values. This parameter is **mandatory**. |
-
-| `options` | An object with attributes allowing for changes in the behavior of this function (See below). This parameter is **optional**. |
+| `data`       | 2-dimensional input data, i.e. the scalar field (must be array of arrays, or pre-processed data object obtained from `new QuadTree()`). This parameter is **mandatory**. |
+| `thresholds` | An array of numerical values that define the lower bounds of the _iso bands_. This parameter is **mandatory**.                                                           |
+| `bandwidths` | An array of numerical values that define the widths of the _iso bands_. This parameter is **mandatory**.                                                                 |
+| `options`    | An object with attributes allowing for changes in the behavior of this function (See below). This parameter is **optional**.                                             |
 
 #### Returns:
 
-1. If `lowerBound` is a _single scalar_, an array of paths representing the _iso lines_ which enclose the _iso band_ of size `bandWidth`.
-
-2. If `lowerBound` is an _array of scalars_, an additional array layer wraps the individual arrays of paths for each `threshold`-`bandWidth` pair. Note, that if `bandWidth` is a _scalar_ it will be applied to all entries in the `lowerBound` array.
+An array of arrays of paths representing the _iso lines_ which enclose the _iso bands_ of size `bandWidths`. Each element of the top level array represents the results for a single value in `bandwidths`. Three bandwidth values in, three arrays of paths out.
 
 A single path is an array of coordinates where each coordinate, again, is an array with two entries `[ x, y ]` denoting the `x` and `y` position, respectively.
 
@@ -178,32 +165,29 @@ Note, that the paths resemble _linear Rings_ by default, i.e. they are closed an
 
 ### Options
 
-The following options can be passed to either `isoLines` or `isoBands`.
+The following options can be passed to either `isoLines` or `isoBands` as properties on an options object.
 
-| Property | Type | Description | Default value |
+```javascript
+const lines = isoLines(data, thresholds, { verbose: true, noFrame: true });
+```
 
-| ------------------------- | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-
-| `options.successCallback` | _function_ | A function called at the end of each _iso line_ / _iso band_ computation. It will be passed the `path array` and the corresponding limit(s) (`threshold` or `lowerBound, bandWidth`) as first and second (third) arguments, respectively. | `null` |
-
-| `options.verbose` | _bool_ | Create `console.log()` info messages before each major step of the algorithm | `false` |
-
-| `options.polygons` | _bool_ | If `true` the function returns a list of path coordinates for individual polygons within each grid cell, if `false` returns a list of path coordinates representing the outline of connected polygons. | `false` |
-
-| `options.linearRing` | _bool_ | If `true`, the polygon paths are returned as linear rings, i.e. the first and last coordinate are identical indicating a closed path. Note, that for the `IsoLines` implementation a value of `false` reduces the output to _iso lines_ that are not necessarily closed paths. | `true` |
-
-| `options.noQuadTree` | _bool_ | If `true`, Quad-Tree optimization is deactivated no matter what the input is. Otherwise, the implementations make use of Quad-Tree optimization if the input demands for _multiple_ iso lines/bands. | `false` |
-
-| `options.noFrame` | _bool_ | If `true`, the _iso line_ / _iso contour_ algorithm omits the enclosing rectangular outer frame when all data points along the boundary of the scalar field are below the threshold. Otherwise, if necessary, the enclosing frame will be included for each threshold level as the very first returned path. | `false` |
+| Property          | Type       | Description                                                                                                                                                                                                                                                                                                  | Default value |
+| ----------------- | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `successCallback` | _function_ | A function called at the end of each _iso line_ / _iso band_ computation. It will be passed the `path array` and the corresponding limit(s) (`threshold` or `lowerBound, bandWidth`) as first and second (third) arguments, respectively.                                                                    | `null`        |
+| `verbose`         | _bool_     | Create `console.log()` info messages before each major step of the algorithm                                                                                                                                                                                                                                 | `false`       |
+| `polygons`        | _bool_     | If `true` the function returns a list of path coordinates for individual polygons within each grid cell, if `false` returns a list of path coordinates representing the outline of connected polygons.                                                                                                       | `false`       |
+| `linearRing`      | _bool_     | If `true`, the polygon paths are returned as linear rings, i.e. the first and last coordinate are identical indicating a closed path. Note, that for the `IsoLines` implementation a value of `false` reduces the output to _iso lines_ that are not necessarily closed paths.                               | `true`        |
+| `noQuadTree`      | _bool_     | If `true`, Quad-Tree optimization is deactivated no matter what the input is. Otherwise, the implementations make use of Quad-Tree optimization if the input demands for _multiple_ iso lines/bands.                                                                                                         | `false`       |
+| `noFrame`         | _bool_     | If `true`, the _iso line_ / _iso contour_ algorithm omits the enclosing rectangular outer frame when all data points along the boundary of the scalar field are below the threshold. Otherwise, if necessary, the enclosing frame will be included for each threshold level as the very first returned path. | `false`       |
 
 ## Examples
 
-The _iso band_ shown below should contain all values greater than or equal to 2 and _less than_ 3.
+The _iso band_ shown below will contain all values greater than or equal to 2 and _less than_ 3.
 
 ```javascript
-const lowerBounds = [2];
+const thresholds = [2];
 
-const bandWidths = [1];
+const bandwidths = [1];
 
 const data = [
   [18, 13, 10, 9, 10, 13, 18],
@@ -215,10 +199,10 @@ const data = [
   [18, 13, 10, 9, 10, 13, 18],
 ];
 
-const bands = isoBands(data, lowerBounds, bandWidths);
+const bands = isoBands(data, thresholds, bandwidths);
 ```
 
-The return value, `bands`, is an array of an array of closed polygons which includes all the points of the grid meeting the criteria.
+The return value, `bands`, is an array of arrays of closed polygons which includes all the points of the grid meeting the criteria.
 
 You can find more examples in the [example/](example/) directory.
 

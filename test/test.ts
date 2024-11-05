@@ -32,10 +32,10 @@ test("isoBands output", function (t) {
     var name = inputFile.name;
     var data = inputFile.data.matrix;
     var outputfile = directories.out + name + ".json";
-    var lowerBand = inputFile.data.lowerBand;
-    var upperBand = inputFile.data.upperBand;
+    var thresholds = inputFile.data.thresholds;
+    var bandwidths = inputFile.data.bandwidths;
 
-    var bands = isoBands(data, lowerBand, upperBand - lowerBand);
+    var bands = isoBands(data, thresholds, bandwidths);
     // console.log(JSON.stringify(bands));
     t.deepEqual(bands, loadJsonFileSync(outputfile), name);
   });
@@ -71,93 +71,85 @@ test("isoLines output", function (t) {
 });
 
 test("isoBands input validation", function (t) {
-  var dataArr = [[1], [2], [3]];
+  const dataArr = [[1], [2], [3]];
 
   t.throws(
     function () {
-      isoBands(null, 0, 5);
+      isoBands(null, [0], [5]);
     },
     /data is required/,
     "missing data"
   );
   t.throws(
     function () {
-      isoBands("string", 0, 5);
+      isoBands("string", [0], [5]);
     },
     /array of arrays/,
-    "invalid data"
+    "invalid type for data"
   );
   t.throws(
     function () {
-      isoBands([1], 0, 5);
+      isoBands([1], [0], [5]);
     },
     /array of arrays/,
-    "invalid data again"
+    "only one dimension to data"
   );
   t.throws(
     function () {
-      isoBands(dataArr, null, 5);
+      isoBands(dataArr, null, [5]);
     },
-    /lowerBound is required/,
-    "missing lowerBound"
+    /thresholds is required/,
+    "missing thresholds"
   );
   t.throws(
     function () {
-      isoBands(dataArr, 0, null);
+      isoBands(dataArr, "number", [3]);
     },
-    /bandWidth is required/,
-    "missing bandWidth"
-  );
-  t.throws(
-    function () {
-      isoBands(dataArr, [0, 1], null);
-    },
-    /bandWidth is required/,
-    "missing bandWidth"
+    /thresholds must be an array/,
+    "invalid type for thresholds"
   );
   t.throws(
     function () {
       isoBands(dataArr, [0, "foo"], [1, 2]);
     },
     /is not a number/,
-    "invalid lowerBound entry"
+    "invalid type for thresholds entry"
   );
   t.throws(
     function () {
-      isoBands(dataArr, "number", 3);
+      isoBands(dataArr, [0], null);
     },
-    /lowerBound must be a number/,
-    "invalid lowerBound"
+    /bandwidths is required/,
+    "missing bandwidths"
   );
   t.throws(
     function () {
-      isoBands(dataArr, 23, "string");
+      isoBands(dataArr, [23], "string");
     },
-    /bandWidth must be a number/,
-    "invalid bandWidth"
+    /bandwidths must be an array/,
+    "invalid type for bandwidths"
   );
   t.throws(
     function () {
-      isoBands(dataArr, 0, [1, 5]);
+      isoBands(dataArr, [0, 1], [1, "foo"]);
     },
-    /bandWidth must be a number/,
-    "invalid lowerBound-bandWidth combination"
+    /is not a number/,
+    "invalid type for bandwidths entry"
   );
   t.throws(
     function () {
-      isoBands(dataArr, [0, 5], [3, 1, 5]);
+      isoBands(dataArr, [0], [1, 5]);
     },
-    /unequal lengths/,
-    "invalid lowerBound-bandWidth combination"
+    /threshold and bandwidth arrays have unequal lengths/,
+    "unequal thresholds + bandwidths array lengths"
   );
   t.throws(
     function () {
-      isoBands(dataArr, 23, 3, "string");
+      isoBands(dataArr, [2], [1], "string");
     },
     /options must be an object/,
-    "invalid options"
+    "invalid type for options"
   );
-
   t.end();
 });
 
@@ -166,7 +158,7 @@ test("isoLines input validation", function (t) {
 
   t.throws(
     function () {
-      isoLines(null, 0);
+      isoLines(null, [0]);
     },
     /data is required/,
     "missing data"
@@ -176,42 +168,42 @@ test("isoLines input validation", function (t) {
       isoLines("string", 0);
     },
     /array of arrays/,
-    "invalid data"
+    "invalid type for data"
   );
   t.throws(
     function () {
       isoLines([1], 0);
     },
     /array of arrays/,
-    "invalid data again"
+    "only one dimension to data"
   );
   t.throws(
     function () {
       isoLines(dataArr, null);
     },
-    /threshold is required/,
-    "missing threshold"
+    /thresholds is required/,
+    "missing thresholds"
   );
   t.throws(
     function () {
       isoLines(dataArr, "number");
     },
-    /threshold must be a number/,
-    "invalid threshold"
+    /thresholds must be an array/,
+    "invalid type for thresholds"
   );
   t.throws(
     function () {
       isoLines(dataArr, [0, "foo"]);
     },
     /is not a number/,
-    "invalid threshold entry"
+    "invalid type for threshold entry"
   );
   t.throws(
     function () {
-      isoLines(dataArr, 23, "string");
+      isoLines(dataArr, [23], "string");
     },
     /options must be an object/,
-    "invalid options"
+    "invalid type for options"
   );
 
   t.end();
@@ -229,10 +221,10 @@ test("successCallback check", function (t) {
     },
   };
 
-  isoLines(data, 1, options);
+  isoLines(data, [1], options);
   t.true(called);
   called = false;
-  isoBands(data, 1, 2, options);
+  isoBands(data, [1], [2], options);
   t.true(called);
 
   t.end();

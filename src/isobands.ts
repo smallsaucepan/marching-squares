@@ -1771,8 +1771,8 @@ const shapeCoordinates = {
  */
 function isoBands(
   input: number[][] | QuadTree,
-  minV: number | number[],
-  bandWidth: number | number[],
+  thresholds: number[],
+  bandwidths: number[],
   options?: Options
 ) {
   let i: number,
@@ -1783,26 +1783,20 @@ function isoBands(
     root = null,
     data = null,
     cellGrid: BandCellGrid = [],
-    multiBand = false,
-    bw = [],
     bandPolygons: Ring[],
-    ret: (Ring | Ring[])[] = [];
+    ret: Ring[][] = [];
 
   /* Defaults for optional args */
   options = options ?? {};
 
   /* basic input validation */
-  if (!input) throw new Error("data is required");
-  if (minV === undefined || minV === null)
-    throw new Error("lowerBound is required");
-  if (bandWidth === undefined || bandWidth === null)
-    throw new Error("bandWidth is required");
   if (!!options && typeof options !== "object")
     throw new Error("options must be an object");
 
   settings = isoBandOptions(options);
 
   /* check for input data */
+  if (!input) throw new Error("data is required");
   if (input instanceof QuadTree) {
     tree = input;
     root = input.root;
@@ -1816,44 +1810,32 @@ function isoBands(
     );
   }
 
+  if (thresholds === undefined || thresholds === null)
+    throw new Error("thresholds is required");
+  if (!Array.isArray(thresholds))
+    throw new Error("thresholds must be an array");
+  if (bandwidths === undefined || bandwidths === null)
+    throw new Error("bandwidths is required");
+  if (!Array.isArray(bandwidths))
+    throw new Error("bandwidths must be an array");
+
   /* check and prepare input thresholds */
-  if (Array.isArray(minV)) {
-    multiBand = true;
 
-    /* activate QuadTree optimization if not explicitly forbidden by user settings */
-    if (!settings.noQuadTree) useQuadTree = true;
+  /* activate QuadTree optimization if not explicitly forbidden by user settings */
+  if (!settings.noQuadTree) useQuadTree = true;
 
-    /* check if all minV are numbers */
-    for (i = 0; i < minV.length; i++)
-      if (isNaN(+minV[i]))
-        throw new Error("lowerBound[" + i + "] is not a number");
+  /* check if all thresholds are numbers */
+  for (i = 0; i < thresholds.length; i++)
+    if (isNaN(+thresholds[i]))
+      throw new Error("thresholds[" + i + "] is not a number");
 
-    if (Array.isArray(bandWidth)) {
-      if (minV.length !== bandWidth.length)
-        throw new Error("lowerBound and bandWidth have unequal lengths");
+  if (thresholds.length !== bandwidths.length)
+    throw new Error("threshold and bandwidth arrays have unequal lengths");
 
-      /* check bandwidth values */
-      for (i = 0; i < bandWidth.length; i++)
-        if (isNaN(+bandWidth[i]))
-          throw new Error("bandWidth[" + i + "] is not a number");
-    } else {
-      if (isNaN(+bandWidth)) throw new Error("bandWidth must be a number");
-
-      bw = [];
-      for (i = 0; i < minV.length; i++) {
-        bw.push(bandWidth);
-      }
-      bandWidth = bw;
-    }
-  } else {
-    if (isNaN(+minV)) throw new Error("lowerBound must be a number");
-
-    minV = [minV];
-
-    if (isNaN(+bandWidth)) throw new Error("bandWidth must be a number");
-
-    bandWidth = [bandWidth as number]; // singular value (not an array)
-  }
+  /* check bandwidth values */
+  for (i = 0; i < bandwidths.length; i++)
+    if (isNaN(+bandwidths[i]))
+      throw new Error("bandwidths[" + i + "] is not a number");
 
   /* create QuadTree root node if not already present */
   if (useQuadTree && !root) {
@@ -1866,29 +1848,24 @@ function isoBands(
     if (settings.polygons)
       console.log("isoBands: returning single polygons for each grid cell");
     else console.log("isoBands: returning polygon paths for entire data grid");
-
-    if (multiBand)
-      console.log(
-        "isoBands: multiple bands requested, returning array of band polygons instead of polygons for a single band"
-      );
   }
 
   /* Done with all input validation, now let's start computing stuff */
 
   /* loop over all minV values */
-  minV.forEach(function (lowerBound, b) {
+  thresholds.forEach(function (lowerBound, b) {
     bandPolygons = [];
 
     /* store bounds for current computation in settings object */
     settings.minV = lowerBound;
-    settings.maxV = lowerBound + bandWidth[b];
+    settings.maxV = lowerBound + bandwidths[b];
 
     if (settings.verbose)
       console.log(
         "isoBands: computing isobands for [" +
           lowerBound +
           ":" +
-          (lowerBound + bandWidth[b]) +
+          (lowerBound + bandwidths[b]) +
           "]"
       );
 
@@ -1945,14 +1922,10 @@ function isoBands(
     }
 
     /* finally, add polygons to output array */
-    if (multiBand) {
-      ret.push(bandPolygons);
-    } else {
-      ret = bandPolygons;
-    }
+    ret.push(bandPolygons);
 
     if (typeof settings.successCallback === "function")
-      settings.successCallback(ret, lowerBound, bandWidth[b]);
+      settings.successCallback(ret, lowerBound, bandwidths[b]);
   });
 
   return ret;
