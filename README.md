@@ -1,18 +1,20 @@
-![GitHub tag](https://img.shields.io/github/v/release/smallsaucepan/marching-squares-ts.svg)
+![GitHub tag](https://img.shields.io/github/v/release/smallsaucepan/marching-squares.svg)
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/smallsaucepan/marching-squares-ts/ci.yaml)
+![Build Status](https://img.shields.io/github/actions/workflow/status/smallsaucepan/marching-squares/ci.yaml)
 
-[![npm](https://img.shields.io/npm/dw/marching-squares-ts.svg)](https://www.npmjs.com/package/marching-squares-ts)
+[![npm](https://img.shields.io/npm/dw/marching-squares.svg)](https://www.npmjs.com/package/marching-squares)
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-# marching-squares-ts
+# marching-squares
 
 A TypeScript implementation of the [Marching Squares](https://en.wikipedia.org/wiki/Marching_squares) algorithm featuring IsoLines and IsoBand computation.
 
+The implementation computes _iso lines_ (_iso contours_) or _iso bands_ for rectangular 2-dimensional scalar fields and returns an array of (closed) paths that enclose the respective threshold(s). To speed-up computations when multiple _iso lines_/_iso bands_ are required, the implementation makes use of a [Quad-Tree](https://en.wikipedia.org/wiki/Quadtree) data structure for fast look-ups of those cells in the scalar field that actually contribute to the _iso line_ or _iso band_, respectively.
+
 This library is a fork of [MarchingSquares.js](https://github.com/RaumZeit/MarchingSquares.js) by Ronny Lorenz (@RaumZeit), converted to TypeScript and with some minor differences in behaviour. Published and maintained going forward by James Beard (@smallsaucepan).
 
-The implementation computes _iso lines_ (_iso contours_) or _iso bands_ for rectangular 2-dimensional scalar fields and returns an array of (closed) paths that enclose the respective threshold(s). To speed-up computations when multiple _iso lines_/_iso bands_ are required, the implementation makes use of a [Quad-Tree](https://en.wikipedia.org/wiki/Quadtree) data structure for fast look-ups of those cells in the scalar field that actually contribute to the _iso line_ or _iso band_, respectively.
+The marching-squares namespace on NPM previously contained an [old project](https://github.com/scottglz/marching-squares) by @scottglz, who agreed to let the name be used by this more modern implementation instead.
 
 ## Table of contents
 
@@ -25,7 +27,7 @@ The implementation computes _iso lines_ (_iso contours_) or _iso bands_ for rect
 
 ## Availability
 
-You can use this module as an [npm package](https://www.npmjs.com/package/marching-squares-ts), load it directly in the browser from a [CDN](), or view the source over on [github](https://github.com/smallsaucepan/marching-squares-ts).
+You can use this module as an [npm package](https://www.npmjs.com/package/marching-squares), load it directly in the browser from a [CDN](), or view the source over on [github](https://github.com/smallsaucepan/marching-squares).
 
 The library should be usable in both CommonJS (require) and ESM (import) environments.
 
@@ -35,7 +37,7 @@ The library should be usable in both CommonJS (require) and ESM (import) environ
 
 ```shell
 
-npm install marching-squares-ts
+npm install marching-squares
 
 ```
 
@@ -52,7 +54,7 @@ There are some easy optimisations available, especially if you are calling `isoL
 The basics first - iso lines.
 
 ```javascript
-import { isoLines } from  "marching-squares-ts");
+import { isoLines } from  "marching-squares");
 
 const data = [
   [1, 1, 2],
@@ -70,7 +72,7 @@ This will yield the data of two lines, which if displayed graphically would look
 Next - iso bands.
 
 ```javascript
-import { isoBands } from  "marching-squares-ts");
+import { isoBands } from  "marching-squares");
 
 const data = [
   [1, 1, 2],
@@ -94,7 +96,7 @@ As part of processing the input data this module uses a Quad Tree to improve per
 Instead of
 
 ```javascript
-import { isoBands } from  "marching-squares-ts");
+import { isoBands } from  "marching-squares");
 
 ...
 const lines1 = isoLines(data, thresholds1);
@@ -104,7 +106,7 @@ const lines2 = isoLines(data, thresholds2);
 do this
 
 ```javascript
-import { isoBands, QuadTree } from  "marching-squares-ts");
+import { isoBands, QuadTree } from  "marching-squares");
 
 ...
 const tree = new QuadTree(data); // extra step :(
@@ -210,9 +212,9 @@ You can find more examples in the [example/](example/) directory.
 
 ## License
 
-marching-squares-ts is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+marching-squares is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-marching-squares-ts grants additional permissions under GNU Affero General Public License version 3 section 7. See [LICENSE.md](LICENSE.md) for details.
+marching-squares grants additional permissions under GNU Affero General Public License version 3 section 7. See [LICENSE.md](LICENSE.md) for details.
 
 ---
 
